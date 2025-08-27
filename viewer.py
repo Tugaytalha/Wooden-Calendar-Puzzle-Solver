@@ -175,7 +175,7 @@ def print_solution_for_date(date: datetime | str, colorize: bool = True, show_le
         print(_render_piece_legend())
 
 
-def print_multiple_solutions(date: datetime | str, max_solutions: int = 3, colorize: bool = True) -> None:
+def print_multiple_solutions(date: datetime | str, max_solutions: int = 3, colorize: bool = True, show_legend: bool = True) -> None:
     """Print multiple solutions for a date if available"""
     if isinstance(date, str):
         date = datetime.fromisoformat(date)
@@ -194,7 +194,7 @@ def print_multiple_solutions(date: datetime | str, max_solutions: int = 3, color
         print(f"\n📋 Solution {i + 1}:")
         print(_render(solution, solver, colorize))
         
-        if i == 0 and colorize:  # Show legend only for first solution
+        if i == 0 and colorize and show_legend:  # Show legend only for first solution if requested
             print(_render_piece_legend())
     
     if len(sols) > max_solutions:
@@ -215,24 +215,43 @@ def _main(argv: list[str]) -> None:
         print(f"  -h, --help     Show this help message")
         sys.exit(1)
 
-    # Parse arguments
+    # Parse arguments more robustly
     date_str = argv[1]
-    colorize = "--no-color" not in argv
-    show_legend = "--no-legend" not in argv
+    colorize = True
+    show_legend = True
     multiple = False
     max_solutions = 1
     
-    # Check for multiple solutions option
-    if "--multiple" in argv:
-        multiple = True
-        try:
-            idx = argv.index("--multiple")
-            if idx + 1 < len(argv):
-                max_solutions = int(argv[idx + 1])
+    # Process remaining arguments
+    i = 2
+    while i < len(argv):
+        arg = argv[i]
+        
+        if arg == "--no-color":
+            colorize = False
+            i += 1
+        elif arg == "--no-legend":
+            show_legend = False
+            i += 1
+        elif arg == "--multiple":
+            multiple = True
+            # Check if next argument is a number
+            if i + 1 < len(argv):
+                try:
+                    max_solutions = int(argv[i + 1])
+                    if max_solutions < 1:
+                        sys.exit(f"Error: --multiple requires a positive number, got {max_solutions}")
+                    i += 2  # Skip both --multiple and the number
+                except ValueError:
+                    # Next argument is not a number, use default
+                    max_solutions = 3
+                    i += 1
             else:
-                max_solutions = 3  # default
-        except (ValueError, IndexError):
-            max_solutions = 3
+                # No argument after --multiple, use default
+                max_solutions = 3
+                i += 1
+        else:
+            sys.exit(f"Unknown option: {arg}")
 
     try:
         date = datetime.fromisoformat(date_str)
@@ -241,7 +260,7 @@ def _main(argv: list[str]) -> None:
 
     # Print solution(s)
     if multiple:
-        print_multiple_solutions(date, max_solutions, colorize)
+        print_multiple_solutions(date, max_solutions, colorize, show_legend)
     else:
         print_solution_for_date(date, colorize, show_legend)
 
