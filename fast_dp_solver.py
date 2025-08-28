@@ -202,6 +202,36 @@ class FastCalendarPuzzleSolver:
 
         return solution[::-1] if dfs(initial_mask, 0) else None
 
+    def _solve_mask_multiple(self, initial_mask: int, max_solutions: int = 10) -> List[List[Tuple[int, int]]]:
+        """Return list of solutions, each solution is list[(piece_idx, placement_mask)]."""
+        solutions: List[List[Tuple[int, int]]] = []
+
+        def dfs_all(board_mask: int, used_mask: int, current_solution: List[Tuple[int, int]]) -> None:
+            if board_mask == self.valid_mask:
+                solutions.append(current_solution[:])
+                return
+
+            if len(solutions) >= max_solutions:
+                return
+
+            # first empty cell (LSB zero in board_mask)
+            empty_bits = self.valid_mask ^ board_mask
+            first_empty_bit = (empty_bits & -empty_bits).bit_length() - 1
+
+            for p_idx, placement in self.cell_to_options[first_empty_bit]:
+                if used_mask & (1 << p_idx):
+                    continue
+                if placement & board_mask:
+                    continue
+
+                # Try this placement
+                current_solution.append((p_idx, placement))
+                dfs_all(board_mask | placement, used_mask | (1 << p_idx), current_solution)
+                current_solution.pop()  # backtrack
+
+        dfs_all(initial_mask, 0, [])
+        return solutions
+
     # ────────────────────────────  PUBLIC API  ─────────────────────────────
     def _target_mask(self, day: int, month_abbr: str, day_abbr: str) -> int:
         """Bit-mask of squares reserved for date (and blanks)."""
@@ -236,15 +266,22 @@ class FastCalendarPuzzleSolver:
         return board
 
     # ─────────────────────────────  USER FACING  ───────────────────────────
-    def solve_for_date(self, day: int, month: int, weekday: int) -> List[List[List[int]]]:
+    def solve_for_date(self, day: int, month: int, weekday: int, max_solutions: int = 1) -> List[List[List[int]]]:
         month_abbr = next(k for k, v in self.MONTHS.items() if v == month)
         day_abbr = next(k for k, v in self.DAYS.items() if v == weekday)
 
         target = self._target_mask(day, month_abbr, day_abbr)
-        moves = self._solve_mask(target)
-        if moves is None:
-            return []
-        return [self._mask_to_board(moves, target)]
+
+        if max_solutions == 1:
+            # Use the original fast method for single solution
+            moves = self._solve_mask(target)
+            if moves is None:
+                return []
+            return [self._mask_to_board(moves, target)]
+        else:
+            # Use the multiple solutions method
+            moves_list = self._solve_mask_multiple(target, max_solutions)
+            return [self._mask_to_board(moves, target) for moves in moves_list]
 
     # exhaustively solve 2024
     def _valid_dates(self) -> List[Tuple[int, int, int]]:
