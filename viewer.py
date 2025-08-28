@@ -145,34 +145,39 @@ def _render_piece_legend() -> str:
 
 
 # ────────────────────────  public convenience  ───────────────────────
-def print_solution_for_date(date: datetime | str, colorize: bool = True, show_legend: bool = True) -> None:
+def print_solution_for_date(date: datetime | str, colorize: bool = True, show_legend: bool = True, max_solutions: int = 1) -> None:
     """
     Solve and pretty-print the puzzle for `date`.
 
     `date` may be a datetime/date object or a string understood by
     `datetime.fromisoformat()` (e.g. "2024-01-01").
-    
+
     Args:
         date: The date to solve for
         colorize: Whether to use colored output (default: True)
         show_legend: Whether to show the piece legend (default: True)
+        max_solutions: Maximum number of solutions to find (default: 1)
     """
     if isinstance(date, str):
         date = datetime.fromisoformat(date)
 
     solver = FastCalendarPuzzleSolver()
-    sols = solver.solve_for_date(date.day, date.month, date.weekday() + 1)
+    sols = solver.solve_for_date(date.day, date.month, date.weekday() + 1, max_solutions)
 
     if not sols:
         print("❌  No solution for that date.")
         return
 
-    # Print the solution
-    print(_render(sols[0], solver, colorize))
-    
-    # Optionally print separate legend
-    if colorize and show_legend:
-        print(_render_piece_legend())
+    if max_solutions == 1:
+        # Print single solution
+        print(_render(sols[0], solver, colorize))
+
+        # Optionally print separate legend
+        if colorize and show_legend:
+            print(_render_piece_legend())
+    else:
+        # Print multiple solutions
+        print_multiple_solutions(date, max_solutions, colorize, show_legend)
 
 
 def print_multiple_solutions(date: datetime | str, max_solutions: int = 3, colorize: bool = True, show_legend: bool = True) -> None:
@@ -181,24 +186,24 @@ def print_multiple_solutions(date: datetime | str, max_solutions: int = 3, color
         date = datetime.fromisoformat(date)
 
     solver = FastCalendarPuzzleSolver()
-    sols = solver.solve_for_date(date.day, date.month, date.weekday() + 1)
+    sols = solver.solve_for_date(date.day, date.month, date.weekday() + 1, max_solutions)
 
     if not sols:
         print("❌  No solution for that date.")
         return
 
     print(f"🎯 Found {len(sols)} solution(s) for {date.strftime('%Y-%m-%d')}")
-    
-    # Show up to max_solutions
-    for i, solution in enumerate(sols[:max_solutions]):
+
+    # Show all found solutions (up to max_solutions)
+    for i, solution in enumerate(sols):
         print(f"\n📋 Solution {i + 1}:")
         print(_render(solution, solver, colorize))
-        
+
         if i == 0 and colorize and show_legend:  # Show legend only for first solution if requested
             print(_render_piece_legend())
-    
-    if len(sols) > max_solutions:
-        print(f"\n... and {len(sols) - max_solutions} more solution(s)")
+
+    if len(sols) >= max_solutions:
+        print(f"\n... (showing first {max_solutions} solutions)")
 
 
 # ───────────────────────────  CLI entry  ─────────────────────────────
@@ -262,7 +267,7 @@ def _main(argv: list[str]) -> None:
     if multiple:
         print_multiple_solutions(date, max_solutions, colorize, show_legend)
     else:
-        print_solution_for_date(date, colorize, show_legend)
+        print_solution_for_date(date, colorize, show_legend, 1)
 
 
 if __name__ == "__main__":
