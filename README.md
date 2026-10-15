@@ -4,7 +4,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.8+-blue.svg)](https://python.org)
 [![Algorithm](https://img.shields.io/badge/Algorithm-Dynamic%20Programming-green.svg)](https://en.wikipedia.org/wiki/Dynamic_programming)
-[![Solutions](https://img.shields.io/badge/Solutions-28K%2B%20Found-red.svg)](./dp_calendar_solutions.json)
+[![Every date](https://img.shields.io/badge/Every%20date-solved-red.svg)](./dp_calendar_solutions.json)
 
 ## Overview
 
@@ -120,18 +120,18 @@ print_solution_for_date("2024-03-15")
 | `calendar_puzzle_solver.py` | Brute-force baseline implementation |
 | `viewer.py` | Solution visualization tool |
 | `compare_solvers.py` | Performance benchmarking |
-| `dp_calendar_solutions.json` | Complete solution database (28K+ solutions) |
+| `dp_calendar_solutions.json` | Precomputed solutions, one per calendar date (365 entries) |
 
 ## Results
 
-The project successfully finds solutions for valid calendar dates, with over 28,000 solutions stored in the complete database. The fast solver can process individual dates in sub-second time, making it practical for interactive use.
+The project finds a solution for every date of the year. The precomputed database holds one solution per date (365 entries), and the fast solver solves a single date in well under a second (about one second in the worst case), which makes it practical for interactive use.
 
 ## Installation
 
 No external dependencies required - uses only Python standard library.
 
 ```bash
-git clone https://github.com/your-username/Wooden-Calendar-Puzzle-Solver.git
+git clone https://github.com/Tugaytalha/Wooden-Calendar-Puzzle-Solver.git
 cd Wooden-Calendar-Puzzle-Solver
 ```
 
